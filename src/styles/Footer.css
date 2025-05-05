@@ -1,0 +1,139 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+.footer {
+  background-color: white;
+  padding: 60px 0 30px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+.footer-about {
+  max-width: 300px;
+}
+
+.footer-logo {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #2D5AF0;
+}
+
+.footer-description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.social-links {
+  display: flex;
+  gap: 12px;
+}
+
+.social-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #2D5AF0;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.social-icon:hover {
+  background-color: #1E4AD8;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.footer-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.links-list {
+  list-style: none;
+  padding: 0;
+}
+
+.links-list li {
+  margin-bottom: 8px;
+}
+
+.footer-link {
+  font-size: 14px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: #2D5AF0;
+}
+
+.footer-contact {
+  margin-bottom: 16px;
+}
+
+.footer-contact .footer-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #666;
+}
+
+.contact-info {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  padding: 0;
+  line-height: 1.8;
+  display: block;
+}
+
+.copyright {
+  border-top: 1px solid #f0f0f0;
+  margin-top: 40px;
+  padding-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+  
