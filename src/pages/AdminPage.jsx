@@ -25,6 +25,7 @@ const AdminPage = () => {
   const [newCountry, setNewCountry] = useState('');
   const [newCity, setNewCity] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [messages, setMessages] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +37,8 @@ const AdminPage = () => {
       fetchApprovedItems();
     } else if (activeTab === 'locations') {
       fetchLocations();
+    } else if (activeTab === 'messages') {
+      fetchMessages();
     }
   }, [activeTab]);
 
@@ -178,6 +181,35 @@ const AdminPage = () => {
         // Something happened in setting up the request that triggered an Error
         setError(`Error: ${error.message}`);
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+      
+      console.log('Fetching messages with token:', token.substring(0, 10) + '...');
+      
+      const response = await axios.get('http://localhost:5000/api/contact', { headers });
+      console.log('Messages response:', response.data);
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError(`Error fetching messages: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -1532,6 +1564,101 @@ const AdminPage = () => {
     );
   };
 
+  const handleMarkAsRead = async (id, isRead) => {
+    try {
+      await axios.patch(`http://localhost:5000/api/contact/${id}/read`, 
+        { read: isRead },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      
+      // Update the message in the local state
+      setMessages(messages.map(msg => 
+        msg._id === id ? { ...msg, read: isRead } : msg
+      ));
+    } catch (err) {
+      setError('Failed to update message status');
+    }
+  };
+
+  const handleDeleteMessage = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this message?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:5000/api/contact/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setMessages(messages.filter(msg => msg._id !== id));
+    } catch (err) {
+      setError('Failed to delete message');
+    }
+  };
+
+  const renderMessages = () => {
+    if (loading) {
+      return <div className="loading">Loading messages...</div>;
+    }
+    
+    if (error) {
+      return <div className="error">{error}</div>;
+    }
+    
+    if (messages.length === 0) {
+      return <div className="empty-state">No messages found.</div>;
+    }
+    
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    };
+    
+    return (
+      <div className="messages-container">
+        <h3>Messages from Contact Form</h3>
+        <div className="messages-list">
+          {messages.map(message => (
+            <div key={message._id} className={`message-card ${!message.read ? 'unread' : ''}`}>
+              <div className="message-header">
+                <h3>{message.subject}</h3>
+                <span className="message-date">{formatDate(message.createdAt)}</span>
+              </div>
+              <div className="message-sender">
+                <strong>From:</strong> {message.name} ({message.email})
+              </div>
+              <div className="message-content">
+                <p>{message.message}</p>
+              </div>
+              <div className="message-actions">
+                {message.read ? (
+                  <button 
+                    onClick={() => handleMarkAsRead(message._id, false)}
+                    className="mark-unread-button"
+                  >
+                    Mark as Unread
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => handleMarkAsRead(message._id, true)}
+                    className="mark-read-button"
+                  >
+                    Mark as Read
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDeleteMessage(message._id)}
+                  className="btn-delete"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (error && error.includes('Access denied')) {
     return (
       <div className="admin-page">
@@ -1596,14 +1723,24 @@ const AdminPage = () => {
           >
             Locations
           </button>
+          <button 
+            className={activeTab === 'messages' ? 'active' : ''}
+            onClick={() => setActiveTab('messages')}
+          >
+            Messages
+            {messages.filter(msg => !msg.read).length > 0 && (
+              <span className="message-badge">{messages.filter(msg => !msg.read).length}</span>
+            )}
+          </button>
         </div>
       </div>
       <div className="admin-content">
         <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h1>
-        {activeTab !== 'locations' && renderRequests()}
+        {activeTab !== 'locations' && activeTab !== 'messages' && renderRequests()}
         {showDetails && renderDetails()}
         {(editingRequest || editingItem) && renderEditForm()}
         {activeTab === 'locations' && renderLocations()}
+        {activeTab === 'messages' && renderMessages()}
       </div>
     </div>
   );

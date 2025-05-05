@@ -33,10 +33,12 @@ const AdminDashboard = () => {
         const response = await axios.get('http://localhost:5000/api/contact', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+        console.log('Messages fetched:', response.data);
         setMessages(response.data);
       }
       setError('');
     } catch (err) {
+      console.error('Error fetching data:', err);
       setError('Failed to load data');
       if (err.response?.status === 401) {
         navigate('/login');
@@ -157,6 +159,9 @@ const AdminDashboard = () => {
             onClick={() => setActiveTab('messages')}
           >
             Messages
+            {messages.filter(msg => !msg.read).length > 0 && (
+              <span className="message-badge">{messages.filter(msg => !msg.read).length}</span>
+            )}
           </button>
         </div>
 
@@ -253,7 +258,14 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="messages-section">
-              <h2>Manage Messages</h2>
+              <div className="section-header">
+                <h2>Messages from Contact Form</h2>
+                <div className="messages-filter">
+                  <span className="filter-label">
+                    {messages.filter(msg => !msg.read).length} unread messages
+                  </span>
+                </div>
+              </div>
               {messages.length === 0 ? (
                 <div className="no-items">
                   <p>No messages found.</p>

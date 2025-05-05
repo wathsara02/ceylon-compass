@@ -515,4 +515,127 @@
 
 .btn-delete-small:hover {
   background-color: #c53030;
+}
+
+/* Messages Styles */
+.messages-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.message-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  border-left: 4px solid #e0e0e0;
+}
+
+.message-card.unread {
+  border-left: 4px solid #4a90e2;
+  background-color: #f8f9ff;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.message-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.message-date {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.message-sender {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.message-content {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.message-content p {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: #495057;
+}
+
+.message-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.mark-read-button,
+.mark-unread-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: transparent;
+}
+
+.mark-read-button {
+  color: #4a90e2;
+  border: 1px solid #4a90e2;
+}
+
+.mark-read-button:hover {
+  background-color: #f0f4ff;
+}
+
+.mark-unread-button {
+  color: #6c757d;
+  border: 1px solid #ced4da;
+}
+
+.mark-unread-button:hover {
+  background-color: #f8f9fa;
+}
+
+.message-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  font-weight: bold;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1rem;
 } 
