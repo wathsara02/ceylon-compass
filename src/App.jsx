@@ -17,7 +17,6 @@ import Accommodations from './pages/Accommodations';
 import AccommodationDetails from './pages/AccommodationDetails';
 import AddAccommodation from './pages/AddAccommodation';
 import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import ForgotPassword from './pages/ForgotPassword';
