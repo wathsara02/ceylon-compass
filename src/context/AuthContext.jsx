@@ -235,8 +235,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      // Fix the URL to use proper axios configuration
-      const response = await axios.get('/api/notifications/unread-count', {
+      const response = await axios.get('/notifications/unread-count', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -4,6 +4,61 @@ import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../context/LocationContext';
 import '../styles/AdminPage.css';
 
+// API configuration
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Utility functions
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
+const handleApiError = (error, customMessage) => {
+  if (error.response) {
+    if (error.response.status === 401) {
+      return 'Authentication error. Please log in again.';
+    } else if (error.response.status === 403) {
+      return 'Access denied. Admin privileges required.';
+    }
+    return `${customMessage}: ${error.response.data.message || error.message}`;
+  } else if (error.request) {
+    return 'No response from server. Please check your connection.';
+  }
+  return `Error: ${error.message}`;
+};
+
+// Common state reset function
+const resetStates = (setShowDetails, setSelectedRequest, setSelectedItem, setEditingRequest, setEditingItem) => {
+  setShowDetails(false);
+  setSelectedRequest(null);
+  setSelectedItem(null);
+  setEditingRequest(null);
+  setEditingItem(null);
+};
+
+// Common API call function
+const makeApiCall = async (method, endpoint, data = {}, setLoading, setError, errorMessage) => {
+  try {
+    setLoading(true);
+    setError(null);
+    const headers = getAuthHeaders();
+    const response = await axios[method](`${API_BASE_URL}${endpoint}`, data, { headers });
+    return response.data;
+  } catch (error) {
+    const errorMsg = handleApiError(error, errorMessage);
+    setError(errorMsg);
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
 const AdminPage = () => {
   const { refreshLocations } = useLocation();
   const [activeTab, setActiveTab] = useState('eventRequests');
@@ -44,17 +99,8 @@ const AdminPage = () => {
 
   const checkAdminAccess = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const response = await axios.get('http://localhost:5000/api/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${API_BASE_URL}/auth/profile`, { headers });
 
       if (response.data.role !== 'admin') {
         setError('Access denied. Admin only.');
@@ -63,72 +109,53 @@ const AdminPage = () => {
 
       fetchRequests();
     } catch (error) {
+      const errorMessage = handleApiError(error, 'Error checking admin access');
+      setError(errorMessage);
       if (error.response?.status === 401) {
         navigate('/login');
-      } else {
-        setError('Error checking admin access');
       }
     }
   };
 
   const fetchRequests = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
+      const [eventRes, accRes, resRes] = await Promise.all([
+        makeApiCall('get', '/eventreq', {}, setLoading, setError, 'Error fetching event requests'),
+        makeApiCall('get', '/accommodationreq', {}, setLoading, setError, 'Error fetching accommodation requests'),
+        makeApiCall('get', '/restaurantreq', {}, setLoading, setError, 'Error fetching restaurant requests')
+      ]);
 
-      // Fetch event requests
-      const eventRes = await axios.get('http://localhost:5000/api/eventreq', { headers });
-      setEventRequests(eventRes.data);
-
-      // Fetch accommodation requests
-      const accRes = await axios.get('http://localhost:5000/api/accommodationreq', { headers });
-      setAccommodationRequests(accRes.data);
-
-      // Fetch restaurant requests
-      const resRes = await axios.get('http://localhost:5000/api/restaurantreq', { headers });
-      setRestaurantRequests(resRes.data);
+      setEventRequests(eventRes);
+      setAccommodationRequests(accRes);
+      setRestaurantRequests(resRes);
     } catch (error) {
-      console.error('Error fetching requests:', error);
-      setError('Error fetching requests');
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchApprovedItems = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-
-      let endpoint;
+      const headers = getAuthHeaders();
       
       switch (activeTab) {
         case 'events':
-          endpoint = 'http://localhost:5000/api/events';
-          const eventsRes = await axios.get(endpoint, { headers });
+          const eventsRes = await axios.get(`${API_BASE_URL}/events`, { headers });
           setEvents(eventsRes.data);
           break;
         case 'restaurants':
-          endpoint = 'http://localhost:5000/api/restaurants';
-          const restaurantsRes = await axios.get(endpoint, { headers });
+          const restaurantsRes = await axios.get(`${API_BASE_URL}/restaurants`, { headers });
           setRestaurants(restaurantsRes.data);
           break;
         case 'accommodations':
-          endpoint = 'http://localhost:5000/api/accommodations';
-          const accommodationsRes = await axios.get(endpoint, { headers });
+          const accommodationsRes = await axios.get(`${API_BASE_URL}/accommodations`, { headers });
           setAccommodations(accommodationsRes.data);
           break;
         default:
           break;
       }
     } catch (error) {
-      console.error(`Error fetching ${activeTab}:`, error);
-      setError(`Error fetching ${activeTab}`);
+      const errorMessage = handleApiError(error, `Error fetching ${activeTab}`);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -139,48 +166,12 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No authentication token found. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-      
-      console.log('Fetching locations with token:', token.substring(0, 10) + '...');
-      
-      const response = await axios.get('http://localhost:5000/api/locations/all', { headers });
-      console.log('Locations response:', response.data);
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${API_BASE_URL}/locations/all`, { headers });
       setLocations(response.data);
     } catch (error) {
-      console.error('Error fetching locations:', error);
-      
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        if (error.response.status === 401) {
-          setError('Authentication error. Please log in again.');
-        } else if (error.response.status === 403) {
-          setError('Access denied. Admin privileges required.');
-        } else if (error.response.status === 404) {
-          setError('Locations endpoint not found. Please check server configuration.');
-        } else {
-          setError(`Error fetching locations: ${error.response.data.message || error.message}`);
-        }
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('No response received:', error.request);
-        setError('No response from server. Please check your connection.');
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        setError(`Error: ${error.message}`);
-      }
+      const errorMessage = handleApiError(error, 'Error fetching locations');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -217,41 +208,21 @@ const AdminPage = () => {
 
   const handleAccept = async (id, collectionName) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const token = localStorage.getItem('token');
-      console.log(`Accepting ${collectionName} with ID: ${id}`);
-      
-      // Make API call to accept request
-      const response = await axios.post(
-        `http://localhost:5000/api/${collectionName}/${id}/accept`,
+      await makeApiCall(
+        'post',
+        `/${collectionName}/${id}/accept`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        setLoading,
+        setError,
+        `Error accepting ${collectionName}`
       );
       
-      console.log('Accept response:', response.data);
-      
-      // Show success message and get confirmation
       const requestType = collectionName.replace('req', ' request');
       window.confirm(`${requestType.charAt(0).toUpperCase() + requestType.slice(1)} accepted successfully! An email notification has been sent to the user.`);
       
-      // Refresh data and close details view
       fetchRequests();
-      setShowDetails(false);
-      setSelectedRequest(null);
-      
+      resetStates(setShowDetails, setSelectedRequest, setSelectedItem, setEditingRequest, setEditingItem);
     } catch (error) {
-      console.error(`Error accepting ${collectionName}:`, error);
-      setError(`Error: ${error.message}`);
-      alert(`Failed to accept ${collectionName}: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -260,35 +231,21 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      console.log(`Rejecting ${collectionName} with ID: ${id}`);
-      
-      // Make API call to reject request
+      const headers = getAuthHeaders();
       const response = await axios.post(
-        `http://localhost:5000/api/${collectionName}/${id}/reject`,
+        `${API_BASE_URL}/${collectionName}/${id}/reject`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers }
       );
       
-      console.log('Reject response:', response.data);
-      
-      // Show success message and get confirmation
       const requestType = collectionName.replace('req', ' request');
       window.confirm(`${requestType.charAt(0).toUpperCase() + requestType.slice(1)} rejected. An email notification has been sent to the user.`);
       
-      // Refresh data and close details view
       fetchRequests();
-      setShowDetails(false);
-      setSelectedRequest(null);
+      resetStates(setShowDetails, setSelectedRequest, setSelectedItem, setEditingRequest, setEditingItem);
     } catch (error) {
-      console.error(`Error rejecting ${collectionName}:`, error);
-      setError(`Error: ${error.message}`);
-      alert(`Failed to reject ${collectionName}: ${error.message}`);
+      const errorMessage = handleApiError(error, `Error rejecting ${collectionName}`);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -296,14 +253,13 @@ const AdminPage = () => {
 
   const handleDelete = async (id, collectionName) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(
-        `http://localhost:5000/api/${collectionName}/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      await makeApiCall(
+        'delete',
+        `/${collectionName}/${id}`,
+        {},
+        setLoading,
+        setError,
+        `Error deleting ${collectionName}`
       );
       
       if (collectionName.includes('request')) {
@@ -312,13 +268,9 @@ const AdminPage = () => {
         fetchApprovedItems();
       }
       
-      // Close the details modal if open
-      setShowDetails(false);
-      setSelectedItem(null);
-      setSelectedRequest(null);
+      resetStates(setShowDetails, setSelectedRequest, setSelectedItem, setEditingRequest, setEditingItem);
     } catch (error) {
-      console.error(`Error deleting ${collectionName}:`, error);
-      setError(`Error deleting ${collectionName}: ${error.response?.data?.message || error.message}`);
+      // Error already handled by makeApiCall
     }
   };
 
@@ -337,42 +289,33 @@ const AdminPage = () => {
 
   const handleSaveEdit = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-
+      const headers = getAuthHeaders();
       let endpoint;
       let itemToUpdate;
       
       if (editingRequest) {
-        // Handle saving edited request
         switch (activeTab) {
           case 'eventRequests':
-            endpoint = `http://localhost:5000/api/eventreq/${editingRequest._id}`;
+            endpoint = `${API_BASE_URL}/eventreq/${editingRequest._id}`;
             break;
           case 'accommodationRequests':
-            endpoint = `http://localhost:5000/api/accommodationreq/${editingRequest._id}`;
+            endpoint = `${API_BASE_URL}/accommodationreq/${editingRequest._id}`;
             break;
           case 'restaurantRequests':
-            endpoint = `http://localhost:5000/api/restaurantreq/${editingRequest._id}`;
+            endpoint = `${API_BASE_URL}/restaurantreq/${editingRequest._id}`;
             break;
           default:
             throw new Error('Invalid request type');
         }
         itemToUpdate = editingRequest;
       } else if (editingItem) {
-        // Handle saving edited approved item
         switch (activeTab) {
           case 'events':
-            endpoint = `http://localhost:5000/api/events/${editingItem._id}`;
+            endpoint = `${API_BASE_URL}/events/${editingItem._id}`;
             break;
           case 'accommodations':
-            endpoint = `http://localhost:5000/api/accommodations/${editingItem._id}`;
-            // Format location data properly if it exists
+            endpoint = `${API_BASE_URL}/accommodations/${editingItem._id}`;
             if (editingItem.location && typeof editingItem.location === 'object') {
-              // Ensure proper structure for location data
               if (!editingItem.location.coordinates) {
                 editingItem.location = {
                   type: 'Point',
@@ -385,7 +328,7 @@ const AdminPage = () => {
             }
             break;
           case 'restaurants':
-            endpoint = `http://localhost:5000/api/restaurants/${editingItem._id}`;
+            endpoint = `${API_BASE_URL}/restaurants/${editingItem._id}`;
             break;
           default:
             throw new Error('Invalid item type');
@@ -394,15 +337,13 @@ const AdminPage = () => {
       } else {
         throw new Error('No item selected for editing');
       }
-
-      console.log('Saving edited item:', itemToUpdate);
       
       const response = await axios.put(endpoint, itemToUpdate, { headers });
       
       if (editingRequest) {
         setSelectedRequest(response.data);
         setEditingRequest(null);
-      fetchRequests();
+        fetchRequests();
       } else {
         setSelectedItem(response.data);
         setEditingItem(null);
@@ -410,8 +351,8 @@ const AdminPage = () => {
       }
       
     } catch (error) {
-      console.error('Error saving edit:', error);
-      setError(error.response?.data?.message || 'Error saving edit');
+      const errorMessage = handleApiError(error, 'Error saving edit');
+      setError(errorMessage);
     }
   };
 
@@ -1292,43 +1233,23 @@ const AdminPage = () => {
   const handleAcceptAccommodation = async (id) => {
     try {
       setLoading(true);
-      setError(null); // Clear any previous errors
+      setError(null);
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No authentication token found');
-        setLoading(false);
-        return;
-      }
-
-      console.log(`Accepting accommodation with ID: ${id}`);
-      
-      // Use the simpler axios.post format which might work better
+      const headers = getAuthHeaders();
       const response = await axios.post(
-        `http://localhost:5000/api/accommodationreq/${id}/accept`,
-        {}, // empty data object
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        `${API_BASE_URL}/accommodationreq/${id}/accept`,
+        {},
+        { headers }
       );
       
-      console.log('Accept response:', response.data);
-      
-      // Success handling
       const result = window.confirm('Accommodation request accepted successfully! An email notification has been sent to the user.');
       
-      // Refresh data and close details view regardless of confirm result
       fetchRequests();
-      setShowDetails(false);
-      setSelectedRequest(null);
+      resetStates(setShowDetails, setSelectedRequest, setSelectedItem, setEditingRequest, setEditingItem);
       
     } catch (error) {
-      console.error('Error accepting accommodation:', error);
-      setError(`Error: ${error.message}`);
-      alert(`Failed to accept accommodation: ${error.message}`);
+      const errorMessage = handleApiError(error, 'Error accepting accommodation');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1342,25 +1263,19 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
+      const headers = getAuthHeaders();
       await axios.post(
-        'http://localhost:5000/api/locations/country',
+        `${API_BASE_URL}/locations/country`,
         { country: newCountry },
         { headers }
       );
       
       setNewCountry('');
       fetchLocations();
-      // Refresh locations in context
       refreshLocations();
     } catch (error) {
-      console.error('Error adding country:', error);
-      setError(error.response?.data?.message || 'Error adding country');
+      const errorMessage = handleApiError(error, 'Error adding country');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1374,25 +1289,19 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
+      const headers = getAuthHeaders();
       await axios.post(
-        `http://localhost:5000/api/locations/city/${selectedCountry}`,
+        `${API_BASE_URL}/locations/city/${selectedCountry}`,
         { city: newCity },
         { headers }
       );
       
       setNewCity('');
       fetchLocations();
-      // Refresh locations in context
       refreshLocations();
     } catch (error) {
-      console.error('Error adding city:', error);
-      setError(error.response?.data?.message || 'Error adding city');
+      const errorMessage = handleApiError(error, 'Error adding city');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1407,22 +1316,17 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-      
+      const headers = getAuthHeaders();
       await axios.delete(
-        `http://localhost:5000/api/locations/country/${country}`,
+        `${API_BASE_URL}/locations/country/${country}`,
         { headers }
       );
       
       fetchLocations();
-      // Refresh locations in context
       refreshLocations();
     } catch (error) {
-      console.error('Error deleting country:', error);
-      setError(error.response?.data?.message || 'Error deleting country');
+      const errorMessage = handleApiError(error, 'Error deleting country');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1437,22 +1341,17 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-      
+      const headers = getAuthHeaders();
       await axios.delete(
-        `http://localhost:5000/api/locations/city/${country}/${city}`,
+        `${API_BASE_URL}/locations/city/${country}/${city}`,
         { headers }
       );
       
       fetchLocations();
-      // Refresh locations in context
       refreshLocations();
     } catch (error) {
-      console.error('Error deleting city:', error);
-      setError(error.response?.data?.message || 'Error deleting city');
+      const errorMessage = handleApiError(error, 'Error deleting city');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1566,17 +1465,19 @@ const AdminPage = () => {
 
   const handleMarkAsRead = async (id, isRead) => {
     try {
-      await axios.patch(`http://localhost:5000/api/contact/${id}/read`, 
+      const headers = getAuthHeaders();
+      await axios.patch(
+        `${API_BASE_URL}/contact/${id}/read`,
         { read: isRead },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        { headers }
       );
       
-      // Update the message in the local state
       setMessages(messages.map(msg => 
         msg._id === id ? { ...msg, read: isRead } : msg
       ));
-    } catch (err) {
-      setError('Failed to update message status');
+    } catch (error) {
+      const errorMessage = handleApiError(error, 'Failed to update message status');
+      setError(errorMessage);
     }
   };
 
@@ -1586,12 +1487,15 @@ const AdminPage = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/contact/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const headers = getAuthHeaders();
+      await axios.delete(
+        `${API_BASE_URL}/contact/${id}`,
+        { headers }
+      );
       setMessages(messages.filter(msg => msg._id !== id));
-    } catch (err) {
-      setError('Failed to delete message');
+    } catch (error) {
+      const errorMessage = handleApiError(error, 'Failed to delete message');
+      setError(errorMessage);
     }
   };
 
