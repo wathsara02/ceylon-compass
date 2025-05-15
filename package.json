@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "vite preview",
-    "seed:locations": "node backend/seedLocations.js"
+    "seed:locations": "node backend/seedLocations.js",
+    "vercel-build": "vite build",
+    "postinstall": "npm run dev"
   },
   "dependencies": {
     "@mui/icons-material": "^7.0.2",
