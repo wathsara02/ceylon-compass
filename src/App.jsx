@@ -5,7 +5,7 @@ import { LocationProvider } from './context/LocationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import Login from './pages/Login';
+import Login from './pages/LogIn';
 import Register from './pages/Register';
 import Restaurants from './pages/Restaurants';
 import RestaurantDetails from './pages/RestaurantDetails';
