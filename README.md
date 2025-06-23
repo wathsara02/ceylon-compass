@@ -65,7 +65,6 @@ ceylon-compass/
 ├── frontend/           # React app with components and styling
 ├── backend/            # Node.js + Express API
 ├── public/             # Static assets
-├── test/               # Test scripts
 ├── docs/               # Documentation and diagrams
 
 
