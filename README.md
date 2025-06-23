@@ -1,12 +1,12 @@
-Ceylon Compass
+Ceylon Compass - A Personalized Cultural and Commercial Platform for the Sri Lankan Diaspora
 
-A Personalized Cultural and Commercial Platform for the Sri Lankan Diaspora
 
 🌍 Project Overview
 
 Ceylon Compass is a personal web development project built to connect Sri Lankan expatriates with authentic Sri Lankan experiences across the globe. It provides a centralized platform where users can explore cultural events, Sri Lankan restaurants, and property listings filtered by their location.
 
 Built with React (Vite) for the frontend and Node.js/Express.js with MongoDB for the backend, Ceylon Compass offers personalized recommendations, verified content listings, and admin-controlled moderation tools to ensure safety and relevance.
+
 
 🎯 Objectives
 
@@ -19,6 +19,7 @@ Business Empowerment: Provide a verified platform for Sri Lankan business owners
 Localized Personalization: Tailor listings by user-selected or auto-detected location.
 
 Scalability: Design a future-proof platform that scales in features and reach.
+
 
 🔧 Core Features
 
@@ -42,6 +43,7 @@ Content moderation tools
 
 Reservation tracking and analytics panel
 
+
 🖥️ Technologies Used
 
 Frontend: React.js, Vite, HTML, CSS, JavaScript
@@ -56,6 +58,7 @@ Hosting: Vercel (frontend), Render/Heroku (backend), MongoDB Atlas (database)
 
 Other Tools: Postman (API testing), Chrome DevTools, GitHub (version control)
 
+
 🛠️ Project Structure
 
 ceylon-compass/
@@ -64,6 +67,7 @@ ceylon-compass/
 ├── public/             # Static assets
 ├── test/               # Test scripts
 ├── docs/               # Documentation and diagrams
+
 
 🧪 Testing
 
