@@ -17,7 +17,8 @@ const AccommodationDetails = () => {
     try {
       setLoading(true);
       console.log(`Fetching accommodation details for ID: ${id}`);
-      const response = await axios.get(`http://localhost:5000/api/accommodations/${id}`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await axios.get(`${API_URL}/accommodations/${id}`);
       console.log('Accommodation data received:', response.data);
       
       // Store the accommodation data
@@ -27,7 +28,7 @@ const AccommodationDetails = () => {
       if (accommodationData.createdBy) {
         try {
           console.log(`Fetching user data for ID: ${accommodationData.createdBy}`);
-          const userResponse = await axios.get(`http://localhost:5000/api/users/${accommodationData.createdBy}`);
+          const userResponse = await axios.get(`${API_URL}/users/${accommodationData.createdBy}`);
           console.log('User data received:', userResponse.data);
           
           // Add user data to accommodation object

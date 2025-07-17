@@ -201,8 +201,9 @@ const AddRestaurant = () => {
       // Debug log what we're sending
       console.log('Sending restaurant request data:', restaurantReqData);
 
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const response = await axios.post(
-        'http://localhost:5000/api/restaurantreq',
+        `${API_URL}/restaurantreq`,
         restaurantReqData,
         {
           headers: {

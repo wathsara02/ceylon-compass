@@ -106,7 +106,8 @@ const ListingForm = () => {
 
     try {
       console.log("Sending POST to /api/accommodationreq");
-      const response = await fetch("http://localhost:5000/api/accommodationreq", {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/accommodationreq`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

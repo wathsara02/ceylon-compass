@@ -18,6 +18,8 @@ export const LocationProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   // Update location when user logs in or changes profile
   useEffect(() => {
     if (user) {
@@ -37,7 +39,7 @@ export const LocationProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       console.log("Fetching countries from API...");
-      const response = await axios.get('http://localhost:5000/api/locations/countries');
+      const response = await axios.get(`${API_URL}/locations/countries`);
       console.log("Countries API response:", response.data);
       setCountries(response.data);
       return response.data;
@@ -48,7 +50,7 @@ export const LocationProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API_URL]);
 
   // Fetch cities for a specific country from the database
   const fetchCitiesByCountry = useCallback(async (country) => {
@@ -62,7 +64,7 @@ export const LocationProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       console.log(`Fetching cities for country: ${country}`);
-      const url = `http://localhost:5000/api/locations/cities/${encodeURIComponent(country)}`;
+      const url = `${API_URL}/locations/cities/${encodeURIComponent(country)}`;
       console.log("Cities API URL:", url);
       const response = await axios.get(url);
       console.log("Cities API response:", response.data);
@@ -76,7 +78,7 @@ export const LocationProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API_URL]);
 
   // Update selected location
   const updateLocation = useCallback((country, city) => {
@@ -100,7 +102,7 @@ export const LocationProvider = ({ children }) => {
           setLoading(true);
           setError(null);
           console.log(`Fetching cities for country: ${selectedCountry}`);
-          const url = `http://localhost:5000/api/locations/cities/${encodeURIComponent(selectedCountry)}`;
+          const url = `${API_URL}/locations/cities/${encodeURIComponent(selectedCountry)}`;
           console.log("Cities API URL:", url);
           const response = await axios.get(url);
           console.log("Cities API response:", response.data);
@@ -116,7 +118,7 @@ export const LocationProvider = ({ children }) => {
       
       fetchCities();
     }
-  }, [selectedCountry]);
+  }, [selectedCountry, API_URL]);
 
   const value = {
     selectedCountry,

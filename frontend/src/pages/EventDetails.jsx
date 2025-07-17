@@ -17,7 +17,8 @@ const EventDetails = () => {
     try {
       setLoading(true);
       console.log(`Fetching event details for ID: ${id}`);
-      const response = await axios.get(`http://localhost:5000/api/events/${id}`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await axios.get(`${API_URL}/events/${id}`);
       console.log('Event data received:', response.data);
       setEvent(response.data);
       setError('');

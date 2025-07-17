@@ -11,12 +11,14 @@ const RestaurantFilter = ({ onFilterChange }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   // Fetch countries when component mounts
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/locations/countries');
+        const response = await axios.get(`${API_URL}/locations/countries`);
         setCountries(response.data || []);
         setError('');
       } catch (err) {
@@ -40,7 +42,7 @@ const RestaurantFilter = ({ onFilterChange }) => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/locations/cities/${encodeURIComponent(country)}`);
+      const response = await axios.get(`${API_URL}/locations/cities/${encodeURIComponent(country)}`);
       setCities(response.data || []);
       setError('');
     } catch (err) {

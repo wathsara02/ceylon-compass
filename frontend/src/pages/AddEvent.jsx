@@ -189,7 +189,8 @@ const AddEvent = () => {
         createdBy: userId
       };
 
-      const response = await axios.post('http://localhost:5000/api/eventreq', eventReqData, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await axios.post(`${API_URL}/eventreq`, eventReqData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

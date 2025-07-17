@@ -28,6 +28,8 @@ const Profile = () => {
     confirmPassword: ''
   });
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   useEffect(() => {
     fetchUserData();
     fetchCountries();
@@ -41,7 +43,7 @@ const Profile = () => {
 
   const fetchCountries = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/locations/countries');
+      const response = await axios.get(`${API_URL}/locations/countries`);
       setCountries(response.data);
       setError(''); // Clear any existing errors
     } catch (err) {
@@ -59,7 +61,7 @@ const Profile = () => {
     
     try {
       const encodedCountry = encodeURIComponent(country);
-      const response = await axios.get(`http://localhost:5000/api/locations/cities/${encodedCountry}`);
+      const response = await axios.get(`${API_URL}/locations/cities/${encodedCountry}`);
       setCities(response.data);
       setError(''); // Clear any existing errors
     } catch (err) {
@@ -80,7 +82,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/api/auth/profile', {
+      const response = await axios.get(`${API_URL}/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -177,7 +179,7 @@ const Profile = () => {
       }
 
       const response = await axios.put(
-        'http://localhost:5000/api/auth/profile/password',
+        `${API_URL}/auth/profile/password`,
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword

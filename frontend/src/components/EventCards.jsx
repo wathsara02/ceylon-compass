@@ -8,13 +8,15 @@ const EventCards = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         // Get the auth token from localStorage
         const token = localStorage.getItem('token');
         
-        const response = await fetch("http://localhost:5000/api/events", {
+        const response = await fetch(`${API_URL}/events`, {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',

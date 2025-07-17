@@ -8,10 +8,12 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/events');
+        const response = await axios.get(`${API_URL}/events`);
         // Filter future events and sort by date
         const futureEvents = response.data
           .filter(event => new Date(event.date) > new Date())

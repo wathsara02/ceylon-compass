@@ -49,7 +49,8 @@ const Events = () => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        let url = 'http://localhost:5000/api/events';
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        let url = `${API_URL}/events`;
         
         // Add query parameters based on filters
         const params = new URLSearchParams();

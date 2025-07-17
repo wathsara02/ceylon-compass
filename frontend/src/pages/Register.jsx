@@ -35,9 +35,11 @@ const Register = () => {
     }
   }, [formData.country]);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   const fetchCountries = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/locations/countries');
+      const response = await axios.get(`${API_URL}/locations/countries`);
       setCountries(response.data);
     } catch (err) {
       console.error('Error fetching countries:', err);
@@ -50,7 +52,7 @@ const Register = () => {
     
     try {
       const encodedCountry = encodeURIComponent(country);
-      const response = await axios.get(`http://localhost:5000/api/locations/cities/${encodedCountry}`);
+      const response = await axios.get(`${API_URL}/locations/cities/${encodedCountry}`);
       setCities(response.data);
     } catch (err) {
       console.error('Error fetching cities:', err);

@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useLocation as useLocationContext } from '../context/LocationContext';
 import '../styles/Listings.css';
+import RestaurantCard from '../components/RestaurantCard';
 import LocationFilter from '../components/LocationFilter';
-import AccomodationCard from '../components/AccomodationCard';
 
-const Accommodations = () => {
-  const { user, isAuthenticated } = useAuth();
+const Restaurants = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { fetchCitiesByCountry } = useLocationContext();
   const location = useLocation();
-  const [accommodations, setAccommodations] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
@@ -28,33 +30,34 @@ const Accommodations = () => {
         city: user.city || '',
         showAll: false
       };
-      console.log('Setting initial user location filters for accommodations:', newFilters);
+      console.log('Setting initial user location filters:', newFilters);
       setFilters(newFilters);
       setInitialLoad(false);
     } else if (!user && initialLoad) {
-      // If no user is logged in, show all accommodations
+      // If no user is logged in, show all restaurants
       const newFilters = {
         country: '',
         city: '',
         showAll: true
       };
-      console.log('No user detected, showing all accommodations');
+      console.log('No user detected, showing all restaurants');
       setFilters(newFilters);
       setInitialLoad(false);
     }
   }, [user, initialLoad]);
 
-  // Fetch accommodations when filters change or component mounts
+  // Fetch restaurants when filters change or component mounts
   useEffect(() => {
-    const fetchAccommodations = async () => {
+    const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        let url = 'http://localhost:5000/api/accommodations';
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         
         // Add query parameters based on filters
         const params = new URLSearchParams();
         
         // We need to check if filters.showAll is false and if we have country/city data
+        // Otherwise, we'll just get everything (equivalent to showAll=true)
         if (!filters.showAll) {
           if (filters.country) {
             params.append('country', filters.country);
@@ -70,57 +73,51 @@ const Accommodations = () => {
         }
         
         const queryString = params.toString();
+        let url = `${API_URL}/restaurants`;
         if (queryString) {
           url += `?${queryString}`;
         }
 
-        console.log(`Fetching accommodations with filters:`, filters);
-        console.log(`Fetching accommodations from ${url}`);
-
+        console.log(`Fetching restaurants with filters:`, filters);
+        console.log(`Fetching restaurants from ${url}`);
+        
         // Public endpoint, no token needed
         const response = await axios.get(url);
         
-        console.log(`Received ${response.data.length} accommodations:`, response.data);
-        
-        // Log image URLs for debugging
-        response.data.forEach(acc => {
-          console.log(`Accommodation ${acc._id} (${acc.name}) - Image sources:`, {
-            imageUrl: acc.imageUrl || 'N/A',
-            images: acc.images || 'N/A'
-          });
-        });
+        console.log(`Received ${response.data.length} restaurants:`, response.data);
         
         // Check if the response data appears to be filtered correctly
         if (!filters.showAll && filters.country) {
-          const matchingAccommodations = response.data.filter(accommodation => 
-            accommodation.country === filters.country && 
-            (!filters.city || accommodation.city === filters.city)
+          const matchingRestaurants = response.data.filter(restaurant => 
+            restaurant.country === filters.country && 
+            (!filters.city || restaurant.city === filters.city)
           );
           
-          if (matchingAccommodations.length !== response.data.length) {
-            console.warn(`Warning: Not all accommodations match the filter criteria. ${matchingAccommodations.length} match out of ${response.data.length}.`);
+          if (matchingRestaurants.length !== response.data.length) {
+            console.warn(`Warning: Not all restaurants match the filter criteria. ${matchingRestaurants.length} match out of ${response.data.length}.`);
             // If backend filtering isn't working, we can do it client-side
-            setAccommodations(matchingAccommodations);
+            setRestaurants(matchingRestaurants);
           } else {
-            setAccommodations(response.data);
+            setRestaurants(response.data);
           }
         } else {
-          setAccommodations(Array.isArray(response.data) ? response.data : []);
+          setRestaurants(Array.isArray(response.data) ? response.data : []);
         }
         
         setError('');
       } catch (error) {
-        console.error('Error fetching accommodations:', error);
-        setError(error.response?.data?.message || 'Failed to load accommodations. Please try again later.');
-        setAccommodations([]);
+        console.error('Error fetching restaurants:', error);
+        setError(error.response?.data?.message || 'Failed to load restaurants. Please try again later.');
+        setRestaurants([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Only fetch if we have initialized the filters
+    // Only fetch if we have initialized the filters 
+    // (either from user data or default "show all")
     if (!initialLoad) {
-      fetchAccommodations();
+      fetchRestaurants();
     }
   }, [filters, initialLoad]);
 
@@ -128,11 +125,11 @@ const Accommodations = () => {
     setFilters(newFilters);
   };
 
-  const handleAddAccommodation = () => {
+  const handleAddRestaurant = () => {
     if (isAuthenticated) {
-      navigate('/accommodations/add');
+      navigate('/restaurants/add');
     } else {
-      if (window.confirm('You need to log in first to add a new accommodation. Would you like to log in now?')) {
+      if (window.confirm('You need to log in first to add a new restaurant. Would you like to log in now?')) {
         navigate('/login');
       }
     }
@@ -141,7 +138,7 @@ const Accommodations = () => {
   return (
     <div className="listings-container">
       <div className="listings-header">
-        <h1 className="listings-title">Accommodations</h1>
+        <h1 className="listings-title">Restaurants</h1>
       </div>
       
       <div className="filter-actions-container">
@@ -151,9 +148,9 @@ const Accommodations = () => {
         />
         
         <div className="add-event-container">
-          <button onClick={handleAddAccommodation} className="add-new-event">
+          <button onClick={handleAddRestaurant} className="add-new-event">
             <i className="fas fa-plus"></i>
-            Add New Accommodation
+            Add New Restaurant
           </button>
         </div>
       </div>
@@ -161,24 +158,24 @@ const Accommodations = () => {
       {error && <div className="error-message">{error}</div>}
       
       {loading ? (
-        <div className="loading-spinner">Loading accommodations...</div>
-      ) : accommodations.length === 0 ? (
+        <div className="loading-spinner">Loading restaurants...</div>
+      ) : restaurants.length === 0 ? (
         <div className="empty-message">
-          No accommodations found. Try changing your filters or location.
+          No restaurants found. Try changing your filters or location.
         </div>
       ) : (
         <div className="listings-grid">
-          {accommodations.map((accommodation) => (
-            <AccomodationCard
-              key={accommodation._id}
-              id={accommodation._id}
-              title={accommodation.name}
-              photo={accommodation.imageUrl || (accommodation.images && accommodation.images.length > 0 ? accommodation.images[0] : null)}
+          {restaurants.map((restaurant) => (
+            <RestaurantCard
+              key={restaurant._id}
+              id={restaurant._id}
+              title={restaurant.name}
+              image={restaurant.image}
               location={{
-                country: accommodation.country,
-                city: accommodation.city
+                country: restaurant.country,
+                city: restaurant.city
               }}
-              type={accommodation.type}
+              cuisine={restaurant.cuisine}
             />
           ))}
         </div>
@@ -187,4 +184,4 @@ const Accommodations = () => {
   );
 };
 
-export default Accommodations; 
+export default Restaurants; 

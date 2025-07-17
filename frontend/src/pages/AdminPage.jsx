@@ -5,7 +5,7 @@ import { useLocation } from '../context/LocationContext';
 import '../styles/AdminPage.css';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Utility functions
 const getAuthHeaders = () => {
@@ -195,7 +195,7 @@ const AdminPage = () => {
       
       console.log('Fetching messages with token:', token.substring(0, 10) + '...');
       
-      const response = await axios.get('http://localhost:5000/api/contact', { headers });
+      const response = await axios.get(`${API_BASE_URL}/contact`, { headers });
       console.log('Messages response:', response.data);
       setMessages(response.data);
     } catch (error) {

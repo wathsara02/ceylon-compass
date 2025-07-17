@@ -15,8 +15,10 @@ function AccommodationList({ filters }) {
     if (filters.minPrice !== undefined) query.append('minPrice', filters.minPrice);
     if (filters.maxPrice !== undefined) query.append('maxPrice', filters.maxPrice);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
     // Fetch data from backend with query string
-    fetch(`http://localhost:5000/api/accommodations?${query.toString()}`)
+    fetch(`${API_URL}/accommodations?${query.toString()}`)
       .then(res => {
         if (!res.ok) {
           throw new Error('No accommodations found with the selected filters');

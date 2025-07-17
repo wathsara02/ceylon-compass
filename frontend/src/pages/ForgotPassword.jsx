@@ -10,6 +10,8 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -17,7 +19,7 @@ const ForgotPassword = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
       setSuccess(response.data.message);
       setTimeout(() => {
         navigate('/login');

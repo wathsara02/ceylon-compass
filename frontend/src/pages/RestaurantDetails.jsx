@@ -18,7 +18,8 @@ const RestaurantDetails = () => {
     try {
       setLoading(true);
       console.log(`Fetching restaurant details for ID: ${id}`);
-      const response = await axios.get(`http://localhost:5000/api/restaurants/${id}`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await axios.get(`${API_URL}/restaurants/${id}`);
       console.log('Restaurant data received:', response.data);
       
       // Check if restaurant data is missing website field

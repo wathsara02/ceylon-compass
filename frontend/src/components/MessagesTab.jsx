@@ -11,10 +11,12 @@ const MessagesTab = () => {
     fetchNotifications();
   }, []);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/notifications/user', {
+      const response = await axios.get(`${API_URL}/notifications/user`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -32,7 +34,7 @@ const MessagesTab = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/notifications/${notificationId}/read`,
+        `${API_URL}/notifications/${notificationId}/read`,
         {},
         {
           headers: {
@@ -50,7 +52,7 @@ const MessagesTab = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        'http://localhost:5000/api/notifications/read-all',
+        `${API_URL}/notifications/read-all`,
         {},
         {
           headers: {
