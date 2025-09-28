@@ -1,0 +1,95 @@
+.messages-tab {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.messages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.messages-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.mark-all-read {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  transition: background-color 0.2s;
+}
+
+.mark-all-read:hover {
+  background-color: #e0e0e0;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-item {
+  padding: 16px;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f0f0f0;
+}
+
+.notification-item.unread {
+  background-color: #e8f0fe;
+  border-left: 4px solid #2D5AF0;
+}
+
+.notification-item.unread:hover {
+  background-color: #d8e5fd;
+}
+
+.notification-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.notification-date {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #dc3545;
+}
+
+.no-messages {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-style: italic;
+} 

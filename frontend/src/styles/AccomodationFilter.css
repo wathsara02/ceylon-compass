@@ -1,0 +1,151 @@
+.accommodation-filter-container {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin: 0 auto 3rem;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.accommodation-filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  flex: 1 1 180px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.accommodation-filter-group label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3436;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+.accommodation-filter-group select,
+.accommodation-filter-group input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+  font-size: 1rem;
+  color: #2d3436;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.accommodation-filter-group select:hover,
+.accommodation-filter-group input:hover {
+  border-color: #fda085;
+}
+
+.accommodation-filter-group select:focus,
+.accommodation-filter-group input:focus {
+  border-color: #f6d365;
+  box-shadow: 0 0 0 3px rgba(246, 211, 101, 0.2);
+}
+
+.accommodation-filter-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  justify-content: center;
+}
+
+.accommodation-filter-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 176, 155, 0.2);
+}
+
+.accommodation-filter-btn:hover,
+.accommodation-filter-btn:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 176, 155, 0.3);
+}
+
+.accommodation-filter-row {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Price range slider styles */
+.accommodation-filter-group input[type="range"] {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  border-radius: 3px;
+  -webkit-appearance: none;
+}
+
+.accommodation-filter-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.accommodation-filter-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 900px) {
+  .accommodation-filter-container {
+    margin: 0 1rem 2rem;
+    padding: 1.5rem;
+  }
+
+  .accommodation-filter-group {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .accommodation-filter-actions {
+    width: 100%;
+  }
+
+  .accommodation-filter-row {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .accommodation-filter-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .accommodation-filter-container {
+    margin: 0 0.5rem 1.5rem;
+    padding: 1rem;
+  }
+}
