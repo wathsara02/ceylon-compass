@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
   axios.defaults.baseURL = API_URL;
 
   // Keep the axios Authorization header in sync with the current Firebase ID token

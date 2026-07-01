@@ -18,7 +18,7 @@ export const LocationProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   // Update location when user logs in or changes profile
   useEffect(() => {

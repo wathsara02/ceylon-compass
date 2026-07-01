@@ -5,7 +5,7 @@ import { useLocation } from '../context/LocationContext';
 import '../styles/AdminPage.css';
 
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // The axios request interceptor registered in AuthContext already attaches
 // the current Firebase ID token to every request, so this only needs to

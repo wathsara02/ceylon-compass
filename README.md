@@ -112,6 +112,19 @@ cd frontend && npm run dev
 
 Frontend runs at `http://localhost:3000`, backend API at `http://localhost:5001/api`.
 
+## Deploying to Vercel
+
+This repo deploys as a single Vercel project — `vercel.json` at the root builds the Vite frontend and runs `backend/server.js` as a Node serverless function, with `/api/*` requests rewritten to it (everything else falls back to `index.html`).
+
+1. Import the repo in Vercel. The root `vercel.json` is auto-detected; no manual framework/build settings needed.
+2. In **Project Settings → Environment Variables**, add:
+   - `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (or a single `FIREBASE_SERVICE_ACCOUNT_JSON`) — same values as `backend/.env`
+   - `EMAIL_USER`, `EMAIL_PASS` — Gmail SMTP credentials
+   - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` — same values as `frontend/.env`
+   - Leave `VITE_API_URL` **unset** — the frontend falls back to the relative `/api` path, which resolves to the same deployment's backend function
+3. Deploy. `npm install` at the root triggers `backend/npm install` and `frontend/npm install` automatically (see the root `package.json` `install` script), and `npm run build` builds the frontend.
+4. The recurring past-events cleanup (`utils/eventCleanup.js`) only runs on a `setInterval` in long-lived processes (local/Docker) — serverless functions don't stay warm long enough for that. On Vercel, either add a [Vercel Cron Job](https://vercel.com/docs/cron-jobs) that calls `POST /api/admin/cleanup-past-events` (with an admin auth token) on a schedule, or trigger it manually from the admin panel.
+
 ## Data Model
 
 Firestore collections (see `backend/repositories/` for the exact fields each one uses):

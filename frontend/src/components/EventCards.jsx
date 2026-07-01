@@ -8,7 +8,7 @@ const EventCards = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(() => {
     const fetchEvents = async () => {

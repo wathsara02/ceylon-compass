@@ -4,10 +4,15 @@
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
   "public": true,
+  "functions": {
+    "backend/server.js": {
+      "includeFiles": "backend/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "backend/server.js"
+      "destination": "/backend/server.js"
     },
     {
       "source": "/(.*)",

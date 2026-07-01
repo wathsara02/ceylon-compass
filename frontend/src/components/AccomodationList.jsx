@@ -15,7 +15,7 @@ function AccommodationList({ filters }) {
     if (filters.minPrice !== undefined) query.append('minPrice', filters.minPrice);
     if (filters.maxPrice !== undefined) query.append('maxPrice', filters.maxPrice);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
 
     // Fetch data from backend with query string
     fetch(`${API_URL}/accommodations?${query.toString()}`)

@@ -34,25 +34,28 @@ emailConfig.initializeTransporter();
 
 console.log('Firebase Admin initialized for project:', process.env.FIREBASE_PROJECT_ID);
 
-// Run initial cleanup of past events
-cleanupPastEvents()
-  .then(result => {
-    console.log(`Initial cleanup completed. Deleted ${result.deleted} past events.`);
-  })
-  .catch(err => {
-    console.error('Error during initial event cleanup:', err);
-  });
-
-// Set up recurring daily cleanup
-setInterval(() => {
+// setInterval-based scheduling doesn't survive serverless cold starts, so only
+// run the recurring cleanup in a long-lived process (local/Docker). On Vercel,
+// trigger POST /api/admin/cleanup-past-events via a Vercel Cron job instead.
+if (!process.env.VERCEL) {
   cleanupPastEvents()
     .then(result => {
-      console.log(`Scheduled cleanup completed. Deleted ${result.deleted} past events.`);
+      console.log(`Initial cleanup completed. Deleted ${result.deleted} past events.`);
     })
     .catch(err => {
-      console.error('Error during scheduled event cleanup:', err);
+      console.error('Error during initial event cleanup:', err);
     });
-}, 24 * 60 * 60 * 1000); // Run every 24 hours
+
+  setInterval(() => {
+    cleanupPastEvents()
+      .then(result => {
+        console.log(`Scheduled cleanup completed. Deleted ${result.deleted} past events.`);
+      })
+      .catch(err => {
+        console.error('Error during scheduled event cleanup:', err);
+      });
+  }, 24 * 60 * 60 * 1000); // Run every 24 hours
+}
 
 // Create a dedicated email route for testing
 app.post('/api/email/send', auth, isAdmin, async (req, res) => {
@@ -97,8 +100,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-// Start server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Start server (skipped on Vercel — the serverless runtime invokes the
+// exported app directly instead of binding a port)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
