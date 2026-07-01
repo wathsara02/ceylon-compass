@@ -1,6 +1,5 @@
-// Utility function to delete past events
-const mongoose = require('mongoose');
-const Event = require('../models/Event');
+const { db } = require('../config/firebaseAdmin');
+const eventRepository = require('../repositories/eventRepository');
 
 /**
  * Deletes all events with dates older than the current date
@@ -8,23 +7,25 @@ const Event = require('../models/Event');
  */
 const cleanupPastEvents = async () => {
   try {
-    // Create date for today at 00:00:00 local time
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-    
+
     console.log(`Running cleanup for events older than ${currentDate.toISOString()}`);
-    
-    // Find events with dates older than today
-    const result = await Event.deleteMany({
-      date: { $lt: currentDate }
-    });
-    
-    console.log(`Deleted ${result.deletedCount} past events`);
-    return { deleted: result.deletedCount, error: null };
+
+    const refs = await eventRepository.findOlderThan(currentDate);
+
+    for (let i = 0; i < refs.length; i += 500) {
+      const batch = db.batch();
+      refs.slice(i, i + 500).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+
+    console.log(`Deleted ${refs.length} past events`);
+    return { deleted: refs.length, error: null };
   } catch (error) {
     console.error("Error cleaning up past events:", error);
     return { deleted: 0, error };
   }
 };
 
-module.exports = { cleanupPastEvents }; 
+module.exports = { cleanupPastEvents };

@@ -9,20 +9,20 @@ import '../styles/Forms.css';
 const AddAccommodation = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    countries, 
-    cities, 
-    loading: locationLoading, 
-    error: locationError, 
-    fetchCountries, 
-    fetchCitiesByCountry 
+  const {
+    countries,
+    cities,
+    loading: locationLoading,
+    error: locationError,
+    fetchCountries,
+    fetchCitiesByCountry
   } = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showVerification, setShowVerification] = useState(false);
   const [cloudinaryLoaded, setCloudinaryLoaded] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -61,19 +61,15 @@ const AddAccommodation = () => {
       document.body.appendChild(script);
     }
 
-    // Fetch countries from database
     fetchCountries();
   }, []);
 
-  // Fetch cities when country changes
   useEffect(() => {
     if (formData.location.country) {
-      console.log("Fetching cities for country:", formData.location.country);
       fetchCitiesByCountry(formData.location.country);
     }
   }, [formData.location.country]);
 
-  // Update error message if location context has an error
   useEffect(() => {
     if (locationError) {
       setError(locationError);
@@ -82,14 +78,9 @@ const AddAccommodation = () => {
 
   const handleCountryChange = (e) => {
     const country = e.target.value;
-    console.log("Country selected:", country);
     setFormData(prev => ({
       ...prev,
-      location: {
-        ...prev.location,
-        country,
-        city: ''
-      }
+      location: { ...prev.location, country, city: '' }
     }));
   };
 
@@ -99,22 +90,15 @@ const AddAccommodation = () => {
       const field = name.split('.')[1];
       setFormData(prev => ({
         ...prev,
-        location: {
-          ...prev.location,
-          [field]: value
-        }
+        location: { ...prev.location, [field]: value }
       }));
     } else if (name === 'price' || name === 'capacity') {
-      // Convert price and capacity to numbers
       setFormData(prev => ({
         ...prev,
         [name]: value === '' ? '' : Number(value)
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -187,7 +171,7 @@ const AddAccommodation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.images.length === 0) {
       setError('Please upload at least one image');
       return;
@@ -197,71 +181,34 @@ const AddAccommodation = () => {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Get user from context and localStorage
-      const currentUser = user;
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-
-      if (!currentUser && !storedUser) {
-        throw new Error('User information not found. Please log in again.');
-      }
-
-      // Use the user ID from either source
-      const userId = currentUser?._id || storedUser?._id || storedUser?.id;
-      if (!userId) {
-        throw new Error('User ID not found. Please log in again.');
-      }
-
-      // Ensure price and capacity are numbers
       const priceAsNumber = Number(formData.price);
       const capacityAsNumber = Number(formData.capacity);
-      
+
       if (isNaN(priceAsNumber) || priceAsNumber <= 0) {
         setError('Please enter a valid price');
         setLoading(false);
         return;
       }
-      
+
       if (isNaN(capacityAsNumber) || capacityAsNumber <= 0) {
         setError('Please enter a valid capacity');
         setLoading(false);
         return;
       }
 
-      // Flatten the data structure to match what the backend expects
       const { location, ...restFormData } = formData;
-      
+
       const accommodationReqData = {
         ...restFormData,
-        // Spread the location fields at the top level
         country: location.country,
         city: location.city,
         address: location.address,
-        // Include other required fields
         price: priceAsNumber,
         capacity: capacityAsNumber,
-        createdBy: userId,
         status: 'pending'
       };
 
-      // Log the data being sent
-      console.log("Sending data to server:", JSON.stringify(accommodationReqData));
-
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const response = await axios.post(
-        `${API_URL}/accommodationreq`,
-        accommodationReqData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await axios.post('/accommodationreq', accommodationReqData);
 
       if (response.status === 201) {
         setShowVerification(true);
@@ -269,9 +216,7 @@ const AddAccommodation = () => {
     } catch (err) {
       console.error('Error adding accommodation:', err);
       if (err.response?.data) {
-        console.error('Server response:', err.response.data);
         setError(err.response.data.message || 'Failed to add accommodation');
-        
         if (err.response?.data?.fields) {
           setError(`Missing required fields: ${err.response.data.fields.join(', ')}`);
         }
@@ -309,8 +254,8 @@ const AddAccommodation = () => {
         <div className="form-group">
           <label>Accommodation Images</label>
           <div className="image-upload-container">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="upload-button"
               onClick={handleImageUpload}
               disabled={!cloudinaryLoaded}
@@ -500,9 +445,9 @@ const AddAccommodation = () => {
           </div>
         </div>
 
-        <button 
-          type="submit" 
-          className="submit-button" 
+        <button
+          type="submit"
+          className="submit-button"
           disabled={loading || uploadedImages.length === 0}
         >
           {loading ? 'Creating Accommodation...' : 'Create Accommodation'}
@@ -513,4 +458,4 @@ const AddAccommodation = () => {
   );
 };
 
-export default AddAccommodation; 
+export default AddAccommodation;

@@ -121,7 +121,7 @@ const App = () => {
                 
                 {/* Forgot Password Routes */}
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 
                 {/* 404 Route */}
                 <Route path="*" element={<Navigate to="/" />} />

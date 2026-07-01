@@ -25,5 +25,16 @@ dist-ssr
 
 # Environment variables
 .env
+.env.local
+.env.*.local
 backend/.env
 frontend/.env
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.pem
+serviceAccountKey*.json
+*-firebase-adminsdk-*.json

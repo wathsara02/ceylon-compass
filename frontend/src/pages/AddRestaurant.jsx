@@ -9,21 +9,21 @@ import '../styles/Details.css';
 const AddRestaurant = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    countries, 
-    cities, 
-    loading: locationLoading, 
-    error: locationError, 
-    fetchCountries, 
-    fetchCitiesByCountry 
+  const {
+    countries,
+    cities,
+    loading: locationLoading,
+    error: locationError,
+    fetchCountries,
+    fetchCitiesByCountry
   } = useLocation();
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
   const [cloudinaryLoaded, setCloudinaryLoaded] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     cuisine: '',
@@ -35,14 +35,10 @@ const AddRestaurant = () => {
     contactNumber: '',
     openingHours: '',
     images: [],
-    cloudName: 'dzetdg1sz',
-    uploadPreset: 'restaurants',
     status: 'pending'
   });
 
-  // Load initial data
   useEffect(() => {
-    // Load Cloudinary script
     if (window.cloudinary && window.cloudinary.openUploadWidget) {
       setCloudinaryLoaded(true);
     } else if (!document.querySelector('script[src="https://widget.cloudinary.com/v2.0/global/all.js"]')) {
@@ -62,19 +58,15 @@ const AddRestaurant = () => {
       document.body.appendChild(script);
     }
 
-    // Fetch countries
     fetchCountries();
   }, []);
 
-  // Fetch cities when country changes
   useEffect(() => {
     if (formData.country) {
-      console.log("Fetching cities for country:", formData.country);
       fetchCitiesByCountry(formData.country);
     }
   }, [formData.country]);
 
-  // Update error state if location context has an error
   useEffect(() => {
     if (locationError) {
       setError(locationError);
@@ -83,20 +75,12 @@ const AddRestaurant = () => {
 
   const handleCountryChange = (e) => {
     const country = e.target.value;
-    console.log("Country selected:", country);
-    setFormData(prev => ({
-      ...prev,
-      country,
-      city: ''
-    }));
+    setFormData(prev => ({ ...prev, country, city: '' }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = () => {
@@ -163,7 +147,7 @@ const AddRestaurant = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.images.length === 0) {
       setError('Please upload at least one image');
       return;
@@ -173,63 +157,24 @@ const AddRestaurant = () => {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Get user from context and localStorage
-      const currentUser = user;
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-
-      if (!currentUser && !storedUser) {
-        throw new Error('User information not found. Please log in again.');
-      }
-
-      // Use the user ID from either source
-      const userId = currentUser?._id || storedUser?._id || storedUser?.id;
-      if (!userId) {
-        throw new Error('User ID not found. Please log in again.');
-      }
-
       const restaurantReqData = {
         ...formData,
-        createdBy: userId,
         status: 'pending'
       };
 
-      // Debug log what we're sending
-      console.log('Sending restaurant request data:', restaurantReqData);
-
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const response = await axios.post(
-        `${API_URL}/restaurantreq`,
-        restaurantReqData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      console.log('Restaurant creation response:', response.data);
+      const response = await axios.post('/restaurantreq', restaurantReqData);
 
       if (response.status === 201) {
         setShowVerification(true);
       }
     } catch (error) {
       console.error('Error adding restaurant:', error);
-      // Enhanced error logging to show response data if available
       if (error.response && error.response.data) {
-        console.error('Server error response:', error.response.data);
-        // Show detailed error message if available
         const errorMessage = error.response.data.message || 'Failed to add restaurant';
-        const detailedError = error.response.data.details || 
-                             (error.response.data.fields ? 
-                              `Missing fields: ${error.response.data.fields.join(', ')}` : 
+        const detailedError = error.response.data.details ||
+                             (error.response.data.fields ?
+                              `Missing fields: ${error.response.data.fields.join(', ')}` :
                               '');
-        
         setError(detailedError ? `${errorMessage}: ${detailedError}` : errorMessage);
       } else {
         setError('Failed to add restaurant');
@@ -264,8 +209,8 @@ const AddRestaurant = () => {
           <div className="form-group">
             <label>Restaurant Images</label>
             <div className="image-upload-container">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="upload-button"
                 onClick={handleImageUpload}
                 disabled={!cloudinaryLoaded}
@@ -434,4 +379,4 @@ const AddRestaurant = () => {
   );
 };
 
-export default AddRestaurant; 
+export default AddRestaurant;

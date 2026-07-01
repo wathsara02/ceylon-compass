@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import '../styles/ForgotPassword.css';
 
 const ForgotPassword = () => {
@@ -10,8 +11,6 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -19,13 +18,17 @@ const ForgotPassword = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
-      setSuccess(response.data.message);
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/reset-password`
+      });
+      setSuccess('Password reset email sent. Check your inbox for a reset link.');
       setTimeout(() => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset email');
+      setError(err.code === 'auth/user-not-found'
+        ? 'No account found with that email'
+        : 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
@@ -36,7 +39,7 @@ const ForgotPassword = () => {
       <div className="forgot-password-form">
         <h2>Forgot Password</h2>
         <p>Enter your email address and we'll send you a link to reset your password.</p>
-        
+
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
@@ -65,4 +68,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword; 
+export default ForgotPassword;

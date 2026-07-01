@@ -39,9 +39,6 @@ const Login = () => {
       const result = await login({ usernameOrEmail, password });
       
       if (result && result.success) {
-        console.log('Login successful:', result.user);
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(result.user));
         navigate('/', { replace: true });
       } else {
         console.error('Login failed:', result.error);

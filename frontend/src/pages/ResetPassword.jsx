@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { confirmPasswordReset } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import '../styles/ResetPassword.css';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const oobCode = searchParams.get('oobCode');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
+
+    if (!oobCode) {
+      setError('Invalid or missing reset link');
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -33,15 +39,15 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/auth/reset-password/${token}`, {
-        password
-      });
-      setSuccess(response.data.message);
+      await confirmPasswordReset(auth, oobCode, password);
+      setSuccess('Password has been reset successfully');
       setTimeout(() => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password');
+      setError(err.code === 'auth/expired-action-code' || err.code === 'auth/invalid-action-code'
+        ? 'This reset link is invalid or has expired'
+        : 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -52,7 +58,7 @@ const ResetPassword = () => {
       <div className="reset-password-form">
         <h2>Reset Password</h2>
         <p>Enter your new password below.</p>
-        
+
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
@@ -92,4 +98,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword; 
+export default ResetPassword;

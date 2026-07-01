@@ -15,12 +15,7 @@ const MessagesTab = () => {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/notifications/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${API_URL}/notifications/user`);
       setNotifications(response.data);
       setLoading(false);
     } catch (error) {
@@ -32,16 +27,7 @@ const MessagesTab = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API_URL}/notifications/${notificationId}/read`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await axios.put(`${API_URL}/notifications/${notificationId}/read`, {});
       fetchNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -50,16 +36,7 @@ const MessagesTab = () => {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${API_URL}/notifications/read-all`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await axios.put(`${API_URL}/notifications/read-all`, {});
       fetchNotifications();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);

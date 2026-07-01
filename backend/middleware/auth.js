@@ -1,54 +1,33 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { admin } = require('../config/firebaseAdmin');
+const userRepository = require('../repositories/userRepository');
 
 const auth = async (req, res, next) => {
-  console.log(`[AUTH] Processing request for ${req.method} ${req.url}`);
-  
   try {
     let token = req.header('Authorization');
-    
+
     if (token && token.startsWith('Bearer ')) {
       token = token.replace('Bearer ', '');
     }
-    
-    console.log(`[AUTH] Raw token: ${token ? (token.substring(0, 10) + '...') : 'none'}`);
-    
+
     if (!token) {
-      console.log('[AUTH] No token provided');
       return res.status(401).json({ message: 'No authentication token, access denied' });
     }
-    
-    console.log('[AUTH] Token exists, verifying...');
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (!decoded || !decoded.userId) {
-      console.log('[AUTH] Invalid token structure');
-      return res.status(401).json({ message: 'Invalid token structure' });
-    }
-    
-    console.log(`[AUTH] Token valid for userId: ${decoded.userId}`);
-    
-    const user = await User.findById(decoded.userId);
-    
+
+    const decoded = await admin.auth().verifyIdToken(token);
+    const user = await userRepository.findByUid(decoded.uid);
+
     if (!user) {
-      console.log('[AUTH] User not found in database');
       return res.status(401).json({ message: 'Token is valid but user not found' });
     }
-    
-    console.log(`[AUTH] User found: ${user.username}, role: ${user.role}`);
-    
+
     req.user = user;
-    req.userId = decoded.userId;
-    
+    req.userId = decoded.uid;
+
     next();
   } catch (error) {
     console.log('[AUTH] Error in auth middleware:', error.message);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-    if (error.name === 'TokenExpiredError') {
+
+    if (error.code === 'auth/id-token-expired') {
       return res.status(401).json({ message: 'Token expired' });
     }
     res.status(401).json({ message: 'Token is not valid' });
@@ -62,4 +41,4 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { auth, isAdmin }; 
+module.exports = { auth, isAdmin };

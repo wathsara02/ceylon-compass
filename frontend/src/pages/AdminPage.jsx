@@ -7,17 +7,12 @@ import '../styles/AdminPage.css';
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Utility functions
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('No authentication token found');
-  }
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
-};
+// The axios request interceptor registered in AuthContext already attaches
+// the current Firebase ID token to every request, so this only needs to
+// set the content type.
+const getAuthHeaders = () => ({
+  'Content-Type': 'application/json'
+});
 
 const handleApiError = (error, customMessage) => {
   if (error.response) {
@@ -182,21 +177,7 @@ const AdminPage = () => {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No authentication token found. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-      
-      console.log('Fetching messages with token:', token.substring(0, 10) + '...');
-      
-      const response = await axios.get(`${API_BASE_URL}/contact`, { headers });
-      console.log('Messages response:', response.data);
+      const response = await axios.get(`${API_BASE_URL}/contact`);
       setMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);

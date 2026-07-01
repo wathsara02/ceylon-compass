@@ -1,13 +1,13 @@
 require('dotenv').config();
 
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const { auth, isAdmin } = require('./middleware/auth');
 const requestRoutes = require('./routes/requestRoutes');
 const emailConfig = require('./config/emailConfig');
 const { cleanupPastEvents } = require('./utils/eventCleanup');
+require('./config/firebaseAdmin'); // initializes the Firebase Admin SDK singleton
 
 const app = express();
 
@@ -32,36 +32,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 emailConfig.initializeTransporter();
 
-// Connect to MongoDB
-console.log("Mongo URI:", process.env.MONGO_URI);
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => {
-    console.log('Connected to MongoDB');
-    
-    // Run initial cleanup of past events
-    cleanupPastEvents()
-      .then(result => {
-        console.log(`Initial cleanup completed. Deleted ${result.deleted} past events.`);
-      })
-      .catch(err => {
-        console.error('Error during initial event cleanup:', err);
-      });
+console.log('Firebase Admin initialized for project:', process.env.FIREBASE_PROJECT_ID);
 
-    // Set up recurring daily cleanup
-    setInterval(() => {
-      cleanupPastEvents()
-        .then(result => {
-          console.log(`Scheduled cleanup completed. Deleted ${result.deleted} past events.`);
-        })
-        .catch(err => {
-          console.error('Error during scheduled event cleanup:', err);
-        });
-    }, 24 * 60 * 60 * 1000); // Run every 24 hours
+// Run initial cleanup of past events
+cleanupPastEvents()
+  .then(result => {
+    console.log(`Initial cleanup completed. Deleted ${result.deleted} past events.`);
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('Error during initial event cleanup:', err);
+  });
+
+// Set up recurring daily cleanup
+setInterval(() => {
+  cleanupPastEvents()
+    .then(result => {
+      console.log(`Scheduled cleanup completed. Deleted ${result.deleted} past events.`);
+    })
+    .catch(err => {
+      console.error('Error during scheduled event cleanup:', err);
+    });
+}, 24 * 60 * 60 * 1000); // Run every 24 hours
 
 // Create a dedicated email route for testing
 app.post('/api/email/send', auth, isAdmin, async (req, res) => {

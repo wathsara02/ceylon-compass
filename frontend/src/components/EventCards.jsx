@@ -13,14 +13,10 @@ const EventCards = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Get the auth token from localStorage
-        const token = localStorage.getItem('token');
-        
         const response = await fetch(`${API_URL}/events`, {
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
+            'Content-Type': 'application/json'
           }
         });
 
@@ -30,7 +26,6 @@ const EventCards = () => {
         }
 
         const data = await response.json();
-        console.log("Fetched events:", data);
         setEvents(data);
         setLoading(false);
       } catch (err) {

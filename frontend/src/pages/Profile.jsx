@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { auth as firebaseAuth } from '../lib/firebase';
 import axios from 'axios';
 import MessagesTab from '../components/MessagesTab';
 import '../styles/Profile.css';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -73,36 +75,29 @@ const Profile = () => {
 
   const fetchUserData = async () => {
     try {
-      // Check if token exists
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('No token found, redirecting to login');
+      if (!firebaseAuth.currentUser) {
         setLoading(false);
         navigate('/login');
         return;
       }
 
-      const response = await axios.get(`${API_URL}/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const response = await axios.get(`${API_URL}/auth/profile`);
+
       setFormData(prev => ({
         ...prev,
         email: response.data.email,
         country: response.data.country || '',
         city: response.data.city || ''
       }));
-      
+
       if (response.data.country) {
         setSelectedCountry(response.data.country);
       }
-      
+
       setError(''); // Clear any existing errors
     } catch (err) {
       console.error('Error fetching user data:', err);
       if (err.response?.status === 401) {
-        console.log('Unauthorized, redirecting to login');
-        localStorage.removeItem('token'); // Clear invalid token
         navigate('/login');
       } else {
         setError('Failed to load user data. Please refresh the page.');
@@ -171,23 +166,16 @@ const Profile = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      const currentUser = firebaseAuth.currentUser;
+      if (!currentUser) {
         setError('Please log in again');
         navigate('/login');
         return;
       }
 
-      const response = await axios.put(
-        `${API_URL}/auth/profile/password`,
-        {
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const credential = EmailAuthProvider.credential(currentUser.email, formData.currentPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+      await updatePassword(currentUser, formData.newPassword);
 
       setSuccess('Password updated successfully');
       setFormData(prev => ({
@@ -199,16 +187,16 @@ const Profile = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Password update error:', err);
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Current password is incorrect');
       } else {
         setError('Failed to update password. Please try again.');
       }
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

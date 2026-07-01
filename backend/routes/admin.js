@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const Event = require('../models/Event');
-const Accommodation = require('../models/Accommodation');
-const Restaurant = require('../models/Restaurant');
-const User = require('../models/User');
+const eventRepository = require('../repositories/eventRepository');
+const accommodationRepository = require('../repositories/accommodationRepository');
+const restaurantRepository = require('../repositories/restaurantRepository');
+const userRepository = require('../repositories/userRepository');
 const { cleanupPastEvents } = require('../utils/eventCleanup');
 
 // Middleware to check if user is admin
@@ -14,33 +14,32 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// Apply admin middleware to all routes
 router.use(isAdmin);
 
 // Get dashboard statistics
 router.get('/dashboard', async (req, res) => {
   try {
     const [
-      totalUsers,
+      allUsers,
       totalEvents,
       totalAccommodations,
-      totalRestaurants,
+      allRestaurants,
       pendingEvents,
       pendingAccommodations
     ] = await Promise.all([
-      User.countDocuments(),
-      Event.countDocuments({ status: 'approved' }),
-      Accommodation.countDocuments({ status: 'approved' }),
-      Restaurant.countDocuments(),
-      Event.countDocuments({ status: 'pending' }),
-      Accommodation.countDocuments({ status: 'pending' })
+      userRepository.findAll(),
+      eventRepository.countByStatus('approved'),
+      accommodationRepository.countByStatus('approved'),
+      restaurantRepository.findAll(),
+      eventRepository.countByStatus('pending'),
+      accommodationRepository.countByStatus('pending')
     ]);
-    
+
     res.json({
-      totalUsers,
+      totalUsers: allUsers.length,
       totalEvents,
       totalAccommodations,
-      totalRestaurants,
+      totalRestaurants: allRestaurants.length,
       pendingEvents,
       pendingAccommodations
     });
@@ -53,14 +52,11 @@ router.get('/dashboard', async (req, res) => {
 router.get('/pending', async (req, res) => {
   try {
     const [pendingEvents, pendingAccommodations] = await Promise.all([
-      Event.find({ status: 'pending' }).sort({ createdAt: -1 }),
-      Accommodation.find({ status: 'pending' }).sort({ createdAt: -1 })
+      eventRepository.findByStatus('pending'),
+      accommodationRepository.findByStatus('pending')
     ]);
-    
-    res.json({
-      events: pendingEvents,
-      accommodations: pendingAccommodations
-    });
+
+    res.json({ events: pendingEvents, accommodations: pendingAccommodations });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -70,21 +66,15 @@ router.get('/pending', async (req, res) => {
 router.put('/events/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
-    
-    const event = await Event.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    
+
+    const event = await eventRepository.updateById(req.params.id, { status });
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-    
+
     res.json(event);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -95,21 +85,15 @@ router.put('/events/:id/status', async (req, res) => {
 router.put('/accommodations/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
-    
-    const accommodation = await Accommodation.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    
+
+    const accommodation = await accommodationRepository.updateById(req.params.id, { status });
     if (!accommodation) {
       return res.status(404).json({ message: 'Accommodation not found' });
     }
-    
+
     res.json(accommodation);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -119,7 +103,7 @@ router.put('/accommodations/:id/status', async (req, res) => {
 // Get all users
 router.get('/users', async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const users = await userRepository.findAll();
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -129,62 +113,57 @@ router.get('/users', async (req, res) => {
 // Get a specific user by ID
 router.get('/users/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    
+    const user = await userRepository.findByUid(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Delete a user
+// Delete a user (and cascade-delete their events/accommodations, matching prior Mongo behavior)
 router.delete('/users/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    
+    const user = await userRepository.findByUid(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    // Also delete all submissions by this user
-    await Promise.all([
-      Event.deleteMany({ createdBy: req.params.id }),
-      Accommodation.deleteMany({ createdBy: req.params.id })
+
+    const [userEvents] = await Promise.all([
+      eventRepository.findByCreatedBy(req.params.id),
+      accommodationRepository.deleteByCreatedBy(req.params.id)
     ]);
-    
+    await Promise.all(userEvents.map((event) => eventRepository.deleteById(event._id)));
+    await userRepository.deleteByUid(req.params.id);
+
     res.json({ message: 'User and all their submissions deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Add this new route to the existing file
+// Cleanup past events
 router.post('/cleanup-past-events', async (req, res) => {
   try {
     const result = await cleanupPastEvents();
-    
+
     if (result.error) {
-      return res.status(500).json({ 
-        message: 'Error cleaning up past events', 
-        error: result.error.message 
+      return res.status(500).json({
+        message: 'Error cleaning up past events',
+        error: result.error.message
       });
     }
-    
-    res.json({ 
-      message: 'Past events cleanup completed successfully', 
-      deletedCount: result.deleted 
+
+    res.json({
+      message: 'Past events cleanup completed successfully',
+      deletedCount: result.deleted
     });
   } catch (error) {
     console.error('Error in admin cleanup route:', error);
-    res.status(500).json({ 
-      message: 'Error processing cleanup request', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error processing cleanup request', error: error.message });
   }
 });
 
-module.exports = router; 
+module.exports = router;

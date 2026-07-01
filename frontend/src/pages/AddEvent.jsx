@@ -5,21 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import VerificationPopup from '../components/VerificationPopup';
 import '../styles/Forms.css';
 
-// JWT decoder function
-const decodeJWT = (token) => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
-    return null;
-  }
-};
-
 const AddEvent = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -46,7 +31,6 @@ const AddEvent = () => {
   });
 
   useEffect(() => {
-    // Check if user is logged in
     if (!user) {
       navigate('/login');
     }
@@ -145,29 +129,8 @@ const AddEvent = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('You must be logged in to submit an event');
-      }
-
-      // Get user from context and localStorage
-      const currentUser = user;
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-
-      if (!currentUser && !storedUser) {
-        throw new Error('User information not found. Please log in again.');
-      }
-
-      // Use the user ID from either source
-      const userId = currentUser?._id || storedUser?._id || storedUser?.id;
-      if (!userId) {
-        throw new Error('User ID not found. Please log in again.');
-      }
-
-      // Format the date to ISO string
       const formattedDate = new Date(formData.date).toISOString();
 
-      // Create the event request data with proper types
       const eventReqData = {
         title: formData.title,
         description: formData.description,
@@ -185,17 +148,10 @@ const AddEvent = () => {
         price: Number(formData.price),
         capacity: Number(formData.capacity),
         image: formData.image,
-        status: 'pending',
-        createdBy: userId
+        status: 'pending'
       };
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const response = await axios.post(`${API_URL}/eventreq`, eventReqData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.post('/eventreq', eventReqData);
 
       if (response.data) {
         setShowVerification(true);
@@ -204,7 +160,6 @@ const AddEvent = () => {
       }
     } catch (err) {
       console.error('Error submitting event request:', err);
-      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || err.message || 'Failed to submit event request');
     } finally {
       setLoading(false);

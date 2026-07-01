@@ -1,31 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const EventReq = require('../models/EventReq');
-const AccommodationReq = require('../models/AccommodationReq');
-const RestaurantReq = require('../models/RestaurantReq');
-const User = require('../models/User');
+const eventReqRepository = require('../repositories/eventReqRepository');
+const accommodationReqRepository = require('../repositories/accommodationReqRepository');
+const restaurantReqRepository = require('../repositories/restaurantReqRepository');
+const attachCreator = require('../utils/attachCreator');
+
+const repositoriesByCollection = {
+  eventreq: eventReqRepository,
+  accommodationreq: accommodationReqRepository,
+  restaurantreq: restaurantReqRepository
+};
 
 // Get all event requests
 router.get('/eventreq', async (req, res) => {
   try {
-    console.log('Fetching event requests...');
-    const requests = await EventReq.find()
-      .lean()
-      .populate({
-        path: 'createdBy',
-        select: 'username email',
-        model: 'User'
-      })
-      .sort({ createdAt: -1 });
-    
-    // Log each request's createdBy field
-    requests.forEach((req, index) => {
-      console.log(`Request ${index + 1} createdBy:`, req.createdBy);
-    });
-
-    res.json(requests);
+    const requests = await eventReqRepository.findAll();
+    res.json(await attachCreator(requests));
   } catch (error) {
-    console.error('Error in /eventreq:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -33,21 +24,8 @@ router.get('/eventreq', async (req, res) => {
 // Get all accommodation requests
 router.get('/accommodationreq', async (req, res) => {
   try {
-    const requests = await AccommodationReq.find()
-      .lean()
-      .populate({
-        path: 'createdBy',
-        select: 'username email',
-        model: 'User'
-      })
-      .sort({ createdAt: -1 });
-    
-    // Log each request's createdBy field
-    requests.forEach((req, index) => {
-      console.log(`Request ${index + 1} createdBy:`, req.createdBy);
-    });
-
-    res.json(requests);
+    const requests = await accommodationReqRepository.findAll();
+    res.json(await attachCreator(requests));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -56,7 +34,7 @@ router.get('/accommodationreq', async (req, res) => {
 // Get all restaurant requests
 router.get('/restaurantreq', async (req, res) => {
   try {
-    const requests = await RestaurantReq.find();
+    const requests = await restaurantReqRepository.findAll();
     res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -69,27 +47,12 @@ router.put('/:collection/:id', async (req, res) => {
     const { collection, id } = req.params;
     const { status } = req.body;
 
-    let Model;
-    switch (collection) {
-      case 'eventreq':
-        Model = EventReq;
-        break;
-      case 'accommodationreq':
-        Model = AccommodationReq;
-        break;
-      case 'restaurantreq':
-        Model = RestaurantReq;
-        break;
-      default:
-        return res.status(400).json({ message: 'Invalid collection' });
+    const repository = repositoriesByCollection[collection];
+    if (!repository) {
+      return res.status(400).json({ message: 'Invalid collection' });
     }
 
-    const request = await Model.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
+    const request = await repository.updateById(id, { status });
     if (!request) {
       return res.status(404).json({ message: 'Request not found' });
     }
@@ -105,31 +68,16 @@ router.delete('/:collection/:id', async (req, res) => {
   try {
     const { collection, id } = req.params;
 
-    let Model;
-    switch (collection) {
-      case 'eventreq':
-        Model = EventReq;
-        break;
-      case 'accommodationreq':
-        Model = AccommodationReq;
-        break;
-      case 'restaurantreq':
-        Model = RestaurantReq;
-        break;
-      default:
-        return res.status(400).json({ message: 'Invalid collection' });
+    const repository = repositoriesByCollection[collection];
+    if (!repository) {
+      return res.status(400).json({ message: 'Invalid collection' });
     }
 
-    const request = await Model.findByIdAndDelete(id);
-
-    if (!request) {
-      return res.status(404).json({ message: 'Request not found' });
-    }
-
+    await repository.deleteById(id);
     res.json({ message: 'Request deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-module.exports = router; 
+module.exports = router;
